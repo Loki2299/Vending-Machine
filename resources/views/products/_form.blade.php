@@ -1,5 +1,3 @@
-@csrf
-
 <label class="block">
     <span class="text-sm font-medium">Name</span>
     <input class="mt-1 w-full rounded border border-slate-300 px-3 py-2" name="name" value="{{ old('name', $product->name ?? '') }}"  maxlength="255">
