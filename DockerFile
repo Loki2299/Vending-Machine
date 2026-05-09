@@ -1,6 +1,7 @@
 FROM php:8.4-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor
+# Install nginx, supervisor, nodejs, and npm
+RUN apk add --no-cache nginx supervisor nodejs npm
 
 RUN docker-php-ext-install pdo_mysql
 
@@ -10,7 +11,11 @@ WORKDIR /app
 
 COPY . .
 
+# Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Install Node dependencies and build assets
+RUN npm install && npm run build
 
 # Create the nginx config
 RUN echo 'server { listen 8080; root /app/public; index index.php; location / { try_files $uri $uri/ /index.php?$query_string; } location ~ \.php$ { fastcgi_pass 127.0.0.1:9000; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; include fastcgi_params; } }' > /etc/nginx/http.d/default.conf
@@ -25,15 +30,9 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'command=nginx -g "daemon off;"' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf
 
-# Set permissions - only for directories that exist
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
-RUN chmod -R 775 /app/storage /app/bootstrap/cache
-
-# Set permissions for public/build if it exists
-RUN if [ -d "/app/public/build" ]; then \
-        chown -R www-data:www-data /app/public/build && \
-        chmod -R 775 /app/public/build; \
-    fi
+# Set permissions
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/public/build
+RUN chmod -R 775 /app/storage /app/bootstrap/cache /app/public/build
 
 EXPOSE 8080
 
