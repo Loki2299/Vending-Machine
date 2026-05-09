@@ -1,0 +1,29 @@
+FROM php:8.4-cli-alpine
+
+# Install dependencies
+RUN apk add --no-cache nginx
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+COPY . .
+
+RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Simple nginx config
+RUN echo 'server { listen 8080; root /app/public; location / { try_files $uri /index.php$is_args$args; } location ~ \.php$ { fastcgi_pass 127.0.0.1:9000; include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; } }' > /etc/nginx/http.d/default.conf
+
+# Start script
+RUN echo '#!/bin/sh
+php artisan migrate --force
+php-fpm -D
+nginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
+
+EXPOSE 8080
+
+CMD ["/start.sh"]
