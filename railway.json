@@ -1,17 +1,11 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "nixpacksConfig": {
-      "phpVersion": "8.4",
-      "phpExtensions": ["pdo_mysql", "mbstring", "exif", "bcmath", "gd", "fileinfo", "tokenizer", "xml"]
-    },
     "buildCommand": "composer install --no-dev --optimize-autoloader"
   },
   "deploy": {
-    "numReplicas": 1,
+    "startCommand": "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT}",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10,
-    "startCommand": "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT}"
+    "restartPolicyMaxRetries": 10
   }
 }
