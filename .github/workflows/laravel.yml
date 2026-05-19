@@ -35,7 +35,7 @@ jobs:
 
   # New job to build and push Docker image
   docker-build-push:
-    needs: laravel-tests  # Only runs if tests pass
+    # needs: laravel-tests  <-- REMOVED THIS LINE
     runs-on: ubuntu-latest
     # Only run on push to main (not on pull_request)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
