@@ -1,31 +1,46 @@
-FROM php:8.4-fpm-alpine
+FROM php:8.4-apache
 
-RUN apk add --no-cache nginx supervisor
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_mysql
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
+# Enable Apache modules
+RUN a2enmod rewrite
+
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+# Set working directory
+WORKDIR /var/www/html
 
+# Copy application files
 COPY . .
 
+# Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-RUN echo 'server { listen 8080; root /app/public; index index.php; location / { try_files $uri $uri/ /index.php?$query_string; } location ~ \.php$ { fastcgi_pass 127.0.0.1:9000; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; include fastcgi_params; } }' > /etc/nginx/http.d/default.conf
+# Configure Apache document root to Laravel's public folder
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-RUN echo '[supervisord]' > /etc/supervisord.conf && \
-    echo 'nodaemon=true' >> /etc/supervisord.conf && \
-    echo '[program:php-fpm]' >> /etc/supervisord.conf && \
-    echo 'command=php-fpm' >> /etc/supervisord.conf && \
-    echo 'autostart=true' >> /etc/supervisord.conf && \
-    echo '[program:nginx]' >> /etc/supervisord.conf && \
-    echo 'command=nginx -g "daemon off;"' >> /etc/supervisord.conf && \
-    echo 'autostart=true' >> /etc/supervisord.conf
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/public/build && \
-    chmod -R 775 /app/storage /app/bootstrap/cache /app/public/build
+# Set ServerName to suppress warning
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-EXPOSE 8080
+EXPOSE 80
 
-CMD sh -c "php artisan migrate --force && /usr/bin/supervisord -c /etc/supervisord.conf"
+CMD ["apache2-foreground"]
