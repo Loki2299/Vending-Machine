@@ -49,16 +49,16 @@ RUN if [ -f .env.example ]; then \
         echo "Creating .env file from scratch"; \
         touch .env; \
     fi && \
-    # Update database configuration
-    sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=${DB_CONNECTION}/" .env && \
-    sed -i "s/DB_HOST=.*/DB_HOST=${DB_HOST}/" .env && \
-    sed -i "s/DB_PORT=.*/DB_PORT=${DB_PORT}/" .env && \
-    sed -i "s/DB_DATABASE=.*/DB_DATABASE=${DB_DATABASE}/" .env && \
-    sed -i "s/DB_USERNAME=.*/DB_USERNAME=${DB_USERNAME}/" .env && \
-    sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=${DB_PASSWORD}/" .env && \
-    sed -i "s/APP_ENV=.*/APP_ENV=${APP_ENV}/" .env && \
-    sed -i "s/APP_DEBUG=.*/APP_DEBUG=${APP_DEBUG}/" .env && \
-    sed -i "s/APP_URL=.*/APP_URL=${APP_URL}/" .env && \
+    # Update database configuration using | as delimiter to avoid issues with URLs
+    sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=${DB_CONNECTION}|" .env && \
+    sed -i "s|DB_HOST=.*|DB_HOST=${DB_HOST}|" .env && \
+    sed -i "s|DB_PORT=.*|DB_PORT=${DB_PORT}|" .env && \
+    sed -i "s|DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE}|" .env && \
+    sed -i "s|DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|" .env && \
+    sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" .env && \
+    sed -i "s|APP_ENV=.*|APP_ENV=${APP_ENV}|" .env && \
+    sed -i "s|APP_DEBUG=.*|APP_DEBUG=${APP_DEBUG}|" .env && \
+    sed -i "s|APP_URL=.*|APP_URL=${APP_URL}|" .env && \
     # Generate app key
     php artisan key:generate
 
