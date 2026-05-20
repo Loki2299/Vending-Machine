@@ -42,14 +42,17 @@ ARG APP_ENV=production
 ARG APP_DEBUG=false
 ARG APP_URL=http://localhost
 
-# Create .env file from .env.example or directly
+# Install PHP dependencies FIRST (before trying to use artisan)
+RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Create .env file from .env.example or directly (after composer install)
 RUN if [ -f .env.example ]; then \
         cp .env.example .env; \
     else \
         echo "Creating .env file from scratch"; \
         touch .env; \
     fi && \
-    # Update database configuration using | as delimiter to avoid issues with URLs
+    # Update database configuration using | as delimiter
     sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=${DB_CONNECTION}|" .env && \
     sed -i "s|DB_HOST=.*|DB_HOST=${DB_HOST}|" .env && \
     sed -i "s|DB_PORT=.*|DB_PORT=${DB_PORT}|" .env && \
@@ -58,12 +61,10 @@ RUN if [ -f .env.example ]; then \
     sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" .env && \
     sed -i "s|APP_ENV=.*|APP_ENV=${APP_ENV}|" .env && \
     sed -i "s|APP_DEBUG=.*|APP_DEBUG=${APP_DEBUG}|" .env && \
-    sed -i "s|APP_URL=.*|APP_URL=${APP_URL}|" .env && \
-    # Generate app key
-    php artisan key:generate
+    sed -i "s|APP_URL=.*|APP_URL=${APP_URL}|" .env
 
-# Install PHP dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# Generate app key (after .env is created and vendor files exist)
+RUN php artisan key:generate
 
 # Install Node dependencies and build assets
 RUN if [ -f package.json ]; then \
@@ -72,6 +73,8 @@ RUN if [ -f package.json ]; then \
     fi
 
 # Run migrations (with safety flag to avoid failures in production)
+# Note: This will fail if database isn't available during build
+# Consider removing this line or using --force flag
 RUN php artisan migrate --force || true
 
 # Cache configurations for production
