@@ -33,12 +33,12 @@ COPY . .
 
 # Build arguments for database configuration
 ARG DB_CONNECTION=mysql
-ARG DB_HOST=db
+ARG DB_HOST=mysql_db
 ARG DB_PORT=3306
-ARG DB_DATABASE=laravel
-ARG DB_USERNAME=laravel
-ARG DB_PASSWORD=secret
-ARG APP_ENV=production
+ARG DB_DATABASE=World
+ARG DB_USERNAME=root
+ARG DB_PASSWORD=password
+ARG APP_ENV=local
 ARG APP_DEBUG=false
 ARG APP_URL=http://localhost
 
